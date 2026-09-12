@@ -2,6 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { endOfDay, startOfDay } from "date-fns";
 
 import { db } from "@/db";
+import { sets, workoutExercises, workouts } from "@/db/schema";
 
 export type LoggedSet = {
   weight: string;
@@ -102,4 +103,61 @@ export async function getWorkoutsForDate(date: Date): Promise<LoggedWorkout[]> {
       exercises,
     };
   });
+}
+
+export type NewWorkoutSet = {
+  weight: number | null;
+  reps: number | null;
+};
+
+export type NewWorkoutExercise = {
+  exerciseId: string;
+  sets: NewWorkoutSet[];
+};
+
+export type NewWorkoutInput = {
+  name: string;
+  startedAt: Date;
+  exercises: NewWorkoutExercise[];
+};
+
+/**
+ * Creates a workout, its exercises, and their sets for the current user.
+ * Ownership is always derived from the Clerk session — never from the caller.
+ */
+export async function createWorkout(
+  input: NewWorkoutInput,
+): Promise<{ id: string } | null> {
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  const [workout] = await db
+    .insert(workouts)
+    .values({ userId, name: input.name, startedAt: input.startedAt })
+    .returning({ id: workouts.id });
+
+  for (const [index, exercise] of input.exercises.entries()) {
+    const [workoutExercise] = await db
+      .insert(workoutExercises)
+      .values({
+        workoutId: workout.id,
+        exerciseId: exercise.exerciseId,
+        order: index,
+      })
+      .returning({ id: workoutExercises.id });
+
+    if (exercise.sets.length > 0) {
+      await db.insert(sets).values(
+        exercise.sets.map((set, setIndex) => ({
+          workoutExerciseId: workoutExercise.id,
+          setNumber: setIndex + 1,
+          weight:
+            set.weight === null ? null : set.weight.toString(),
+          reps: set.reps,
+        })),
+      );
+    }
+  }
+
+  return workout;
 }

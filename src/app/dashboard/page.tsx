@@ -1,5 +1,6 @@
+import Link from "next/link";
 import { format, isValid, parseISO } from "date-fns";
-import { Clock, Dumbbell } from "lucide-react";
+import { Clock, Dumbbell, Plus } from "lucide-react";
 
 import {
   Card,
@@ -9,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getWorkoutsForDate } from "@/data/workouts";
 
@@ -49,7 +51,17 @@ export default async function DashboardPage({
           </p>
         </div>
 
-        <DatePicker date={date} />
+        <div className="flex items-center gap-2">
+          <DatePicker date={date} />
+          <Button
+            className="gap-1.5"
+            nativeButton={false}
+            render={<Link href="/dashboard/workout/new" />}
+          >
+            <Plus className="size-4" />
+            New workout
+          </Button>
+        </div>
       </div>
 
       <Separator className="my-6" />

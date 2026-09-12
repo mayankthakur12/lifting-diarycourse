@@ -9,6 +9,8 @@ Before generating or modifying ANY code, Claude Code MUST first read the relevan
 
 - `docs/ui.md` — UI conventions and guidance.
 - 'docs/data-fetching.md' - Data  fetching principles
+- `docs/auth.md` — Authentication standards (Clerk).
+- `docs/data-mutation.md` — Data mutation standards.
 
 If no doc covers the area you are working on, proceed with general best practices, but check `/docs` first every time.
 
