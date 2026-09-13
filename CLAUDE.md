@@ -11,6 +11,7 @@ Before generating or modifying ANY code, Claude Code MUST first read the relevan
 - 'docs/data-fetching.md' - Data  fetching principles
 - `docs/auth.md` — Authentication standards (Clerk).
 - `docs/data-mutation.md` — Data mutation standards.
+- `docs/routing.md` — Routing and route-protection standards.
 
 If no doc covers the area you are working on, proceed with general best practices, but check `/docs` first every time.
 

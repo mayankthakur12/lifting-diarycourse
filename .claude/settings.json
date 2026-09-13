@@ -1,1 +1,23 @@
-{}
+{
+  "permissions": {
+    "allow": ["Edit(CLAUDE.md)", "Read(docs/*.md)"]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "agent",
+            "if": "Write(docs/*.md)",
+            "prompt": "A file was just written by the Write tool. Hook input JSON: $ARGUMENTS. Look at tool_input.file_path. If it does not match docs/<filename>.md (a direct child of the /docs directory), do nothing and stop. Otherwise: 1) Read CLAUDE.md in the project root. 2) Under the '## ALWAYS check `/docs` first' section there is a bullet list of documentation files (each line like \"- `docs/xyz.md` — description.\") ending right before the sentence starting with \"If no doc covers\". If a bullet already references docs/<filename>.md, do nothing and stop. 3) Otherwise read the new doc file itself and write a new bullet in the exact same style as the existing bullets (backtick-wrapped path, em dash, one concise sentence summarizing what the doc covers), and insert it as the last item of that bullet list, preserving a blank line between the list and the 'If no doc covers' sentence. 4) Do not modify any other part of CLAUDE.md.",
+            "model": "claude-haiku-4-5-20251001",
+            "timeout": 90,
+            "statusMessage": "Syncing CLAUDE.md docs list..."
+          }
+        ]
+      }
+    ]
+  }
+}
+

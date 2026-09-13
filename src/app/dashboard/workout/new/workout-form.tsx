@@ -23,8 +23,10 @@ import {
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import type { ExerciseOption } from "@/data/exercises";
+import type { EditableWorkout } from "@/data/workouts";
 
 import { createWorkoutAction } from "./actions";
+import { updateWorkoutAction } from "../[workoutId]/actions";
 
 type SetDraft = {
   weight: string;
@@ -44,18 +46,34 @@ function emptyExercise(): ExerciseDraft {
   return { exerciseId: "", sets: [emptySet()] };
 }
 
-export function WorkoutForm({ exercises }: { exercises: ExerciseOption[] }) {
+function draftsFromWorkout(workout: EditableWorkout): ExerciseDraft[] {
+  return workout.exercises.map((exercise) => ({
+    exerciseId: exercise.exerciseId,
+    sets: exercise.sets.map((set) => ({
+      weight: set.weight === null ? "" : String(set.weight),
+      reps: set.reps === null ? "" : String(set.reps),
+    })),
+  }));
+}
+
+export function WorkoutForm({
+  exercises,
+  workout,
+}: {
+  exercises: ExerciseOption[];
+  workout?: EditableWorkout;
+}) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState(workout?.name ?? "");
   const [startedAt, setStartedAt] = useState(() =>
-    format(new Date(), "yyyy-MM-dd'T'HH:mm"),
+    format(workout?.startedAt ?? new Date(), "yyyy-MM-dd'T'HH:mm"),
   );
-  const [exerciseDrafts, setExerciseDrafts] = useState<ExerciseDraft[]>([
-    emptyExercise(),
-  ]);
+  const [exerciseDrafts, setExerciseDrafts] = useState<ExerciseDraft[]>(() =>
+    workout ? draftsFromWorkout(workout) : [emptyExercise()],
+  );
 
   function updateExercise(index: number, next: Partial<ExerciseDraft>) {
     setExerciseDrafts((prev) =>
@@ -121,23 +139,37 @@ export function WorkoutForm({ exercises }: { exercises: ExerciseOption[] }) {
 
     startTransition(async () => {
       try {
-        const workout = await createWorkoutAction({
-          name,
-          startedAt: new Date(startedAt),
-          exercises: exerciseDrafts.map((exercise) => ({
-            exerciseId: exercise.exerciseId,
-            sets: exercise.sets.map((set) => ({
-              weight: set.weight === "" ? null : Number(set.weight),
-              reps: set.reps === "" ? null : Number(set.reps),
-            })),
+        const exercisesInput = exerciseDrafts.map((exercise) => ({
+          exerciseId: exercise.exerciseId,
+          sets: exercise.sets.map((set) => ({
+            weight: set.weight === "" ? null : Number(set.weight),
+            reps: set.reps === "" ? null : Number(set.reps),
           })),
-        });
+        }));
+
+        if (workout) {
+          await updateWorkoutAction({
+            workoutId: workout.id,
+            name,
+            startedAt: new Date(startedAt),
+            exercises: exercisesInput,
+          });
+        } else {
+          await createWorkoutAction({
+            name,
+            startedAt: new Date(startedAt),
+            exercises: exercisesInput,
+          });
+        }
         router.push(
           `/dashboard?date=${format(new Date(startedAt), "yyyy-MM-dd")}`,
         );
-        void workout;
       } catch {
-        setError("Something went wrong creating this workout. Try again.");
+        setError(
+          workout
+            ? "Something went wrong updating this workout. Try again."
+            : "Something went wrong creating this workout. Try again.",
+        );
       }
     });
   }
@@ -297,7 +329,11 @@ export function WorkoutForm({ exercises }: { exercises: ExerciseOption[] }) {
           Cancel
         </Button>
         <Button type="submit" disabled={isPending}>
-          {isPending ? "Saving…" : "Save workout"}
+          {isPending
+            ? "Saving…"
+            : workout
+              ? "Update workout"
+              : "Save workout"}
         </Button>
       </div>
     </form>
