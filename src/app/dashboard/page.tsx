@@ -1,5 +1,6 @@
 import { format, isValid, parseISO } from "date-fns";
-import { Clock, Dumbbell } from "lucide-react";
+import { Clock, Dumbbell, Pencil, Plus } from "lucide-react";
+import Link from "next/link";
 
 import {
   Card,
@@ -9,6 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { getWorkoutsForDate } from "@/data/workouts";
 
@@ -38,6 +40,7 @@ export default async function DashboardPage({
   const params = await searchParams;
   const date = resolveDate(params.date);
   const workouts = await getWorkoutsForDate(date);
+  const dateParam = format(date, "yyyy-MM-dd");
 
   return (
     <div className="mx-auto w-full max-w-3xl px-6 py-10">
@@ -49,7 +52,13 @@ export default async function DashboardPage({
           </p>
         </div>
 
-        <DatePicker date={date} />
+        <div className="flex gap-2 sm:items-center">
+          <DatePicker date={date} />
+          <Button render={<Link href={`/dashboard/workouts/new?date=${dateParam}`} />}>
+            <Plus className="size-4" />
+            Log workout
+          </Button>
+        </div>
       </div>
 
       <Separator className="my-6" />
@@ -62,6 +71,13 @@ export default async function DashboardPage({
             <p className="text-sm text-muted-foreground">
               Nothing was recorded on {format(date, "do MMM yyyy")}.
             </p>
+            <Button
+              className="mt-2"
+              render={<Link href={`/dashboard/workouts/new?date=${dateParam}`} />}
+            >
+              <Plus className="size-4" />
+              Log workout
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -71,11 +87,23 @@ export default async function DashboardPage({
             return (
               <Card key={workout.id}>
                 <CardHeader>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <CardTitle>{workout.name}</CardTitle>
-                    {workout.focus && (
-                      <Badge variant="secondary">{workout.focus}</Badge>
-                    )}
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <CardTitle>{workout.name}</CardTitle>
+                      {workout.focus && (
+                        <Badge variant="secondary">{workout.focus}</Badge>
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      render={
+                        <Link href={`/dashboard/workouts/${workout.id}/edit`} />
+                      }
+                    >
+                      <Pencil className="size-3.5" />
+                      Edit
+                    </Button>
                   </div>
                   <CardDescription className="flex flex-wrap items-center gap-4 pt-1">
                     <span className="flex items-center gap-1.5">
